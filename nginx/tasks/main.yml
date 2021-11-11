@@ -1,0 +1,41 @@
+---
+# tasks file for nginx
+  - name: create Config Folder on Target
+    file:
+      path: "{{ item }}"
+      recurse: yes
+      state: directory
+    with_items:
+    - /var/opt/nginx/config
+    - /var/opt/nginx/data
+    - /var/opt/docker
+
+  - name: Copy Nginx Config file
+    copy:
+      src: nginx.conf
+      dest: /var/opt/nginx/config/nginx.conf
+    notify:
+        - restart nginx service
+
+  - name: Copy Nginx Index file
+    copy:
+      src: index.html
+      dest: /var/opt/nginx/data/index.html
+
+  - name: Copy Docker Compose file
+    copy:
+      src: docker-compose.yaml
+      dest: /var/opt/docker/docker-compose.yaml
+
+  - name: Create Docker New Network
+    community.docker.docker_network:
+      name: nginx_2
+
+  - name: Pip install docker for Ansible's docker_login and docker_service modules
+    pip:
+      name: "docker-compose"
+
+  - name: Run Docker Compose file on Targets
+    community.docker.docker_compose:
+      project_src: /var/opt/docker
+      state: present
